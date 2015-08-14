@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appengine-web-app xmlns="http://appengine.google.com/ns/1.0">
+  <!-- Fill in the app name and version -->
+  <application>ageless-valor-629</application>
+  <version>1</version>
+  <!-- TODO(jaigupta): update threadsafe to true if code is threadsafe -->
+  <threadsafe>true</threadsafe>
+
+  <!-- this is needed for cloud sql -->
+  <use-google-connector-j>true</use-google-connector-j>
+  <sessions-enabled>true</sessions-enabled>
+  <!-- TODO(jaigupta): Confirmed! this is causing a lot of task queue requests piling up
+  in app-engine. Hence disabling async-session-persisntence. Renenable when sure what the actual
+  reason is.  -->
+  <async-session-persistence enabled="false"/>
+  <ssl-enabled>false</ssl-enabled>
+  <system-properties>
+    <property name="java.util.logging.config.file" value="WEB-INF/appengine_logging.properties"/>
+    <!--  This must be set to prod before uploading to prod server/appengine -->
+    <property name="spring.profiles.active" value="appengine"/>
+    <property name="java.util.logging.config.file" value="WEB-INF/classes/log4j.properties"/>
+  </system-properties>
+</appengine-web-app>

@@ -1,0 +1,182 @@
+apply plugin: 'java'
+apply plugin: 'eclipse-wtp'
+apply plugin: 'war'
+// apply plugin: 'jetty'
+// apply plugin: 'spring-boot'
+apply plugin: 'appengine'
+
+version = '1.0'
+repositories {
+  mavenCentral()
+  maven {
+    url "http://maven.restlet.com"
+  }
+}
+
+// This dependency list is needed for plugins
+buildscript {
+
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+
+    // Spring boot needed to provide some basic configurations for the server.
+    // classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.1.10.RELEASE'
+
+    // Google app engine plugin for deploying on appengine.
+    classpath 'com.google.appengine:gradle-appengine-plugin:1.9.17'
+
+    // TODO(jaigupta): This should not be needed. Document it?
+    classpath 'org.codehaus.groovy:groovy-backports-compat23:2.3.5'
+  }
+}
+
+war{
+   archiveName = 'ROOT.war'
+   destinationDir = file('webapps')
+}
+
+// These are the dependencies needed by the tasks
+dependencies {
+  // Servlet use javax package during compile but replace with tomcat one at runtime.
+  providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
+  runtime 'javax.servlet:jstl:1.2'
+
+  // Sring boot
+  // compile("org.springframework.boot:spring-boot-starter-web")
+  // compile("org.springframework.boot:spring-boot-starter-actuator")
+
+  // Spring core
+  compile 'org.springframework:spring-core:4.1.1.RELEASE'
+  compile 'org.springframework:spring-jdbc:4.1.0.RELEASE'
+  compile 'org.springframework:spring-orm:4.1.0.RELEASE'
+  compile 'org.springframework:spring-webmvc:4.1.1.RELEASE'
+  compile 'org.springframework:spring-tx:4.1.0.RELEASE'
+  compile 'org.springframework:spring-web:4.1.1.RELEASE'
+
+  // Spring security
+  compile 'org.springframework.security:spring-security-web:3.2.5.RELEASE'
+  compile 'org.springframework.security:spring-security-config:3.2.5.RELEASE'
+  compile 'org.springframework.security:spring-security-taglibs:3.2.5.RELEASE'
+
+  // Google appengine sdk
+  appengineSdk 'com.google.appengine:appengine-java-sdk:1.9.17'
+
+  // Hibernate 
+  compile 'org.hibernate:hibernate:3.5.4-Final'
+  compile 'org.hibernate:hibernate-core:3.6.7.Final'
+  compile 'org.hibernate:hibernate-entitymanager:3.6.7.Final'
+
+  // BoneCP for database connection management
+  compile 'com.jolbox:bonecp:0.7.1.RELEASE'
+
+  // Testing
+  compile 'org.springframework:spring-test:2.5'
+  compile 'junit:junit:4.+'
+  compile 'org.testng:testng:6.8.7'
+  
+  // Lucene + SOLR
+  compile 'org.apache.lucene:lucene-core:4.9.0'
+  compile 'org.apache.lucene:lucene-queryparser:4.9.0'
+  compile 'org.apache.lucene:lucene-analyzers:3.6.2'
+  compile 'org.springframework.data:spring-data-solr:1.3.1.RELEASE'
+  compile 'org.springframework.data:spring-data-jpa:1.7.1.RELEASE'
+
+  // Logging
+  compile 'org.slf4j:slf4j-api:1.7.5'
+  // compile 'org.slf4j:jcl-over-slf4j:1.7.5'
+  // compile 'org.slf4j:jul-to-slf4j:1.7.5'
+  // compile 'org.slf4j:slf4j-log4j12:1.7.5'
+  // compile 'log4j:log4j:1.2.16'
+
+  compile 'com.google.protobuf:protobuf-java:2.5.0'
+  compile 'mysql:mysql-connector-java:5.1.27'
+  compile 'cglib:cglib:3.0'
+  compile 'dom4j:dom4j:1.6.1'
+  compile 'commons-logging:commons-logging:1.1.3'
+  compile 'commons-collections:commons-collections:3.2.1'
+  compile 'antlr:antlr:2.7.7'
+  compile 'org.javassist:javassist:3.15.0-GA'
+  compile 'org.json:json:20140107'
+  compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.13'
+  compile 'org.springframework.data:spring-data-jpa:1.6.1.RELEASE'
+  compile 'org.apache.commons:commons-lang3:3.3.2'
+  compile 'org.apache.solr:solr-dataimporthandler:4.4.0'
+  compile 'org.apache.solr:solr:4.4.0'
+  compile 'org.apache.solr:solr-core:4.4.0'
+
+  // Query DSL
+  compile 'com.mysema.querydsl:querydsl-core:3.3.1'
+  compile 'com.mysema.querydsl:querydsl-apt:3.3.1'
+  compile 'com.mysema.querydsl:querydsl-jpa:3.3.1'
+
+  appengineSdk 'com.google.appengine:appengine-java-sdk:1.9.17'
+}
+
+sourceSets {
+    generated {
+        java {
+            srcDirs = ['src/main/generated']
+        }
+    }
+}
+
+appengine {
+  downloadSdk = true
+  httpPort = 8085
+
+  appcfg {
+      email = 'sayhellotojai@gmail.com'
+      oauth2 = true
+
+      logs {
+          severity = 1
+          outputFile = file('mylogs.txt')
+      }
+
+      app {
+          id = 'ageless-valor-629'
+      }
+  }
+}
+// ---- query dsl configurations -----
+configurations {
+    querydslapt
+}
+
+task generateQueryDSL(type: JavaCompile, group: 'build', description: 'Generates the QueryDSL query types') {
+    source = sourceSets.main.java
+    classpath = configurations.compile + configurations.querydslapt
+    options.compilerArgs = [
+            "-proc:only",
+            "-processor", "com.mysema.query.apt.jpa.JPAAnnotationProcessor"
+    ]
+    destinationDir = sourceSets.generated.java.srcDirs.iterator().next()
+}
+
+compileJava {
+    dependsOn generateQueryDSL
+    source generateQueryDSL.destinationDir
+}
+
+compileGeneratedJava {
+    dependsOn generateQueryDSL
+    options.warnings = false
+    classpath += sourceSets.main.runtimeClasspath
+}
+
+clean {
+    delete sourceSets.generated.java.srcDirs
+}
+
+
+// -- Jetty runwar configs
+
+// Jetty run enables hot code replace and easy automated reload of the server. (Only for development)
+// jettyRun.contextPath = ''
+// jettyRun.webXml = null
+
+// Google appengine uses deploy through war.
+// jettyRunWar.contextPath = ''
